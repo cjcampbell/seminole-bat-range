@@ -1,5 +1,5 @@
 # LASE_dD
-Stable hydrogen isotope analyses of the origins of <i>Lasiurus seminolus</i> fur.
+Range delineation and stable hydrogen isotope analyses of <i>Lasiurus seminolus</i>.
 
 ### /R/
 Scripts used to read, tidy, and standardize data and run analyses.
