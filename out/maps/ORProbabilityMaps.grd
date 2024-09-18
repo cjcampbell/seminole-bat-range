@@ -1,0 +1,26 @@
+[general]
+creator=R package 'raster'
+created=2024-02-16 16:54:11
+[data]
+datatype=FLT4S
+byteorder=little
+nbands=17
+bandorder=BIL
+minvalue=5.66710459320118e-05:6.78710859843685e-06:3.41111335618341e-06:1.39549880325799e-05:5.84974092053634e-08:2.58443803489709e-05:2.83849785028805e-06:5.32281056299649e-06:0.000185959168316367:4.47475938092439e-06:1.57154938540799e-06:1.4510377639961e-05:4.52082463087123e-06:3.54313908696938e-06:7.7581335769492e-05:2.41036088945891e-05:0.00214332934705602
+maxvalue=0.999999978058723:1.00000001439653:1.0000000030389:1.00000003483827:1.00000001570214:1.00000000366482:1.00000001507876:1.00000000574068:1.00000002073903:1.00000000520024:0.999999981655928:1.00000002563807:1.00000001595658:0.999999986309799:1.00000001762592:0.999999990712937:0.999999983080523
+nodatavalue=-3.4e+38
+[legend]
+legendtype=
+values=
+color=
+[description]
+layername=F.1_OR:F.2_OR:F.3_OR:F.4_OR:H.1_OR:H.2_OR:H.3_OR:H.4_OR:H.5_OR:HC.1_OR:TR.1_OR:TR.2_OR:TR.3_OR:TR.4_OR:TR.5_OR:TR.6_OR:WR.1_OR
+[georeference]
+nrows=501
+ncols=747
+xmin=-1600613.0312389
+ymin=-2996401.86268642
+xmax=3396816.9687611
+ymax=1602778.13731358
+projection=+proj=aea +lat_0=40 +lon_0=-96 +lat_1=20 +lat_2=60 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs
+wkt=PROJCRS["unknown",    BASEGEOGCRS["unknown",        DATUM["North American Datum 1983",            ELLIPSOID["GRS 1980",6378137,298.257222101,                LENGTHUNIT["metre",1]],            ID["EPSG",6269]],        PRIMEM["Greenwich",0,            ANGLEUNIT["degree",0.0174532925199433],            ID["EPSG",8901]]],    CONVERSION["unnamed",        METHOD["Albers Equal Area",            ID["EPSG",9822]],        PARAMETER["Latitude of false origin",40,            ANGLEUNIT["degree",0.0174532925199433],            ID["EPSG",8821]],        PARAMETER["Longitude of false origin",-96,            ANGLEUNIT["degree",0.0174532925199433],            ID["EPSG",8822]],        PARAMETER["Latitude of 1st standard parallel",20,            ANGLEUNIT["degree",0.0174532925199433],            ID["EPSG",8823]],        PARAMETER["Latitude of 2nd standard parallel",60,            ANGLEUNIT["degree",0.0174532925199433],            ID["EPSG",8824]],        PARAMETER["Easting at false origin",0,            LENGTHUNIT["metre",1],            ID["EPSG",8826]],        PARAMETER["Northing at false origin",0,            LENGTHUNIT["metre",1],            ID["EPSG",8827]]],    CS[Cartesian,2],        AXIS["easting",east,            ORDER[1],            LENGTHUNIT["metre",1,                ID["EPSG",9001]]],        AXIS["northing",north,            ORDER[2],            LENGTHUNIT["metre",1,                ID["EPSG",9001]]]]
