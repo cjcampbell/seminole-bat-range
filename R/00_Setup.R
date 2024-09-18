@@ -18,7 +18,7 @@ library(tidyr)
 
 # Make an object to help navigate the subdirectories.
 # Be sure to fill this in if you're reproducing these analyses!
-my_dir_path <- "/Users/cjcampbell/LASE_dD"
+my_dir_path <- "/Users/cjcampbell/seminole-bat-range"
 if(!exists("wd")) { wd <- list() }
 wd$R       <- file.path( my_dir_path, "R" )
 wd$bin     <- file.path( my_dir_path, "bin" )
