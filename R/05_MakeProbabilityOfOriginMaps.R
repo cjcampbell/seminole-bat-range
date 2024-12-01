@@ -1,6 +1,6 @@
 
 # Setup -------------------------------------------------------------------
-source("~/LASE_dD/R/00_Setup.R")
+source("R/00_Setup.R")
 mydata_transformed <- readRDS( file.path(wd$bin, "mydata_transformed.rds") )
 
 load( file.path(wd$bin, "my_isoscapes.RData") )
@@ -24,19 +24,18 @@ lapply(1:nrow(mydata_transformed), function(i) {
     additionalModels = range_raster,
     additionalModel_name = "cropped"
   )
-  raster::writeRaster(
-    croppedSurface, 
-    file = file.path(mapPath, paste0(mydata_transformed$ID[i], "_cropped.grd")), 
-    format = "raster",
-    overwrite = T)
-  
+  terra::writeRaster(
+    croppedSurface[[1]], 
+    file = file.path(mapPath, paste0(mydata_transformed$ID[i], "_prob.tif")),
+    overwrite = T
+    )
 })
 
 # Convert maps to data.frame format for later use -------------------------
 
 # Load maps.
 maps_cropped <- list.files(
-  mapPath, pattern = "*_cropped.grd$", full.names = TRUE, recursive = T) %>%
+  mapPath, pattern = "*_prob.tif$", full.names = TRUE, recursive = T) %>%
   terra::rast() %>% 
   raster::stack()
 
@@ -46,7 +45,7 @@ maps_quantile_stack <-
     isocat::makeQuantileSurfaces(maps_cropped[[i]])
     }) %>% 
   stack()
-names(maps_quantile_stack) <- paste0(names(maps_cropped), "_quantile")
+names(maps_quantile_stack) <- gsub("_prob", "_quant", names(maps_quantile_stack))
 writeRaster(maps_quantile_stack, filename = file.path(mapPath, "quantileProbabilityMaps.grd"), overwrite = TRUE)
 
 # Calculate quantile-simulation surfaces.
@@ -62,21 +61,20 @@ maps_quantsim_stack <- pbmcapply::pbmclapply(
     )
  }) %>%
   raster::stack()
-names(maps_quantsim_stack) <- paste0(names(maps_cropped), "_quantsim")
+names(maps_quantsim_stack) <- gsub("_quant", "_qSim", names(maps_quantsim_stack))
 writeRaster(maps_quantsim_stack, filename = file.path(mapPath, "quantsimProbabilityMaps.grd"), overwrite = TRUE)
 
 # And odds ratios.
-maps_odds_stack <- 
+maps_odds_stack <-
   pbmcapply::pbmclapply(1:nlayers(maps_cropped), mc.cores = 3, function(i){
     isocat::makeOddsSurfaces(maps_cropped[[i]])
-    }) %>% 
+    }) %>%
   stack()
-names(maps_odds_stack) <- paste0(names(maps_cropped), "_OR")
-writeRaster(maps_odds_stack, filename = file.path(mapPath, "ORProbabilityMaps.grd"), overwrite = TRUE)
+names(maps_odds_stack) <- gsub("_prob", "_odds", names(maps_cropped))
+writeRaster(maps_odds_stack, filename = file.path(mapPath, "oddsProbabilityMaps.grd"), overwrite = TRUE)
 
 # Combine, make dataframe. -----------------------------------------------------
 # Do this in batches b/c it's pretty resource-intensive.
-names(maps_cropped) <- paste0(names(maps_cropped), "_raw")
 
 wd$tmp_df <- file.path(wd$bin,"tmp_df")
 if(dir.exists(wd$tmp_df)) unlink(wd$tmp_df, recursive=TRUE)
@@ -84,7 +82,7 @@ if(!dir.exists(wd$tmp_df) ) dir.create(wd$tmp_df)
 
 pbmcapply::pbmclapply(
   1:nlayers(maps_cropped), mc.cores = 3, function(i){
-    basename <- gsub("_cropped_raw", "", names(maps_cropped[[i]]))
+    basename <- names(maps_cropped[[i]])
     mystack <- stack(maps_cropped[[i]], maps_quantile_stack[[i]], maps_quantsim_stack[[i]], maps_odds_stack[[i]])
     names(mystack) <- gsub("_cropped", "", names(mystack) )
     mdf <- mystack %>% 

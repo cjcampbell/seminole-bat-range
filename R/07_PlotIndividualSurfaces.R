@@ -8,15 +8,13 @@ maps_df <- readRDS(file.path(wd$bin, "maps_df.rds"))
 mydata_distDirStats <- read.csv(file.path(wd$out, "mydata_distDirStats.csv"))
 
 # This is specific to my local computer.
-source("~/LASE_dD/R_setup/locationSpatialData.R")
 NoAm <- readRDS( file.path(wd$bin, "NoAm.rds") )
-
 IDs <- unique(maps_df$ID)
 
 # Individually ------------------------------------------------------------
 
 states <- readRDS(file.path(wd$bin, "states.rds"))
-lapply(c("OR", "quantsim"), function(m) {
+lapply(c("odds", "qSim"), function(m) {
   
   lapply(IDs, function(myID) {
     
@@ -28,7 +26,7 @@ lapply(c("OR", "quantsim"), function(m) {
       ggtitle(myID) +
       geom_tile(mapping=aes(x=x,y=y,fill=value, color = value))
     
-    if(m == "OR") {
+    if(m == "odds") {
       p <- p + scale_fill_viridis_c(
         "Odds of origin",
         option = "turbo", direction = 1, limits = c(0,1)
@@ -42,7 +40,7 @@ lapply(c("OR", "quantsim"), function(m) {
           fill = NA, color = "grey20", size = 0.25
         ) 
     }
-    if(m == "quantsim") {
+    if(m == "qSim") {
       p <- p + scale_fill_viridis_c(
         "Prob of origin (quant-sim)",
         option = "mako", direction = 1, limits = c(0,1)
@@ -94,4 +92,3 @@ lapply(c("OR", "quantsim"), function(m) {
     ggsave(p, filename = file.path(wd$figs, paste0(myID, "_", m, "_origin.png")))
   })
 })
-

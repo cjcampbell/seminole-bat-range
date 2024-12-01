@@ -1,11 +1,10 @@
 # Load  ----------------------------------------------------------
 
-if(!exists("mydata")) source(file.path(wd$R, "01_loadIsotopedata.R"))
-if(!exists("transferFunctionData_Campbelletal")) {
-  transferFunctionData_Campbelletal <- 
-    readRDS(file.path(wd$data, "transferFunctions", "transferFunctionData_Campbelletal.rds"))
-}
-
+if(!exists("mydata")) { source(file.path(wd$R, "01_loadIsotopedata.R")) }
+transferFunctionData_Campbelletal <- 
+    readRDS(
+      file.path(wd$data, "transferFunctions",
+                "transferFunctionData_Campbelletal.rds") )
 
 # Apply transfer functions, define molt status  ---------------------------------
 

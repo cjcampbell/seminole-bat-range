@@ -15,7 +15,37 @@ probMaps_prop <- sum(probMaps_binary)/17
 # Load movement data.
 mydata_distDirStats <- fread(file.path(wd$out, "mydata_distDirStats.csv"))
 
-# Plot with points and minimum distance traveled.
+# Load mapping data
+
+# Load gadm data.
+usaDat <- geodata::gadm(country="USA", path= locationGADMData, level=1) %>% 
+  st_as_sf() %>% 
+  st_simplify(dTolerance=1000)
+
+usa_centroids <- usaDat %>% 
+  st_centroid() %>% 
+  st_coordinates() %>% 
+  as.data.frame()
+
+usaDat_east <- usaDat[usa_centroids$X>-110,]
+
+# source("R/R_setup/locationSpatialData.R")
+if(!exists("locationGADMData")) stop("object `locationGADMData` must be specified")
+
+MEXDat <- geodata::gadm(country="MEX", path= locationGADMData, level=1) %>% 
+  st_as_sf() %>% 
+  st_simplify(dTolerance=1000)
+CANDat <- geodata::gadm(country="CAN", path= locationGADMData, level=1) %>% 
+  st_as_sf() %>% 
+  st_simplify(dTolerance=1000)
+
+gadm <- bind_rows(usaDat_east, MEXDat) %>% 
+  bind_rows(CANDat)
+
+NoAm <- readRDS(file.path(wd$bin, "NoAm.rds"))
+waterbodies <- readRDS( file.path(wd$bin, "waterbodies.rds"))
+
+# Plot with points and minimum distance traveled. ----
 # gradientCols <- c("#8ecae6","#219ebc", "#023047" )
 # gradientCols <- c("black","#5466FF","#FFBD00", "yellow","#FFFEC3")
 gradientCols <-  c("#8ecae6","#219ebc", "#30123BFF" , "black")
@@ -57,14 +87,6 @@ p_map <- ggplot() +
 
 
 # Plot direction traveled.
-
-# mydata_distDirStats %>%
-#   arrange(probOfOrigin_south_OfSampleSite) %>% 
-#   dplyr::mutate(ID = factor(ID, levels = .$ID)) %>% 
-#   ggplot() +
-#   geom_point(aes(x=probOfOrigin_south_OfSampleSite, y = ID)) +
-#   scale_x_continuous(limits = c(0.5,1))
-
 p_distDir <- mydata_distDirStats %>%
   ggplot() +
   geom_point(aes(x=probOfOrigin_south_OfSampleSite, y = minDist_km), size = 2, color = "black") +

@@ -1,17 +1,24 @@
+source("R/00_Setup.R")
 
+# Load data and tidy.
+df_0 <- lapply(1:4, function(s){
+    readxl::read_excel("data/All_SEBA_data_FINAL_For_Submission.xlsx", sheet = s)
+  }) %>% 
+  bind_rows()
 
-mydata0 <- read.csv( file.path( wd$data, "SEBA_data_dD_tidy.csv"))
-
-# Load the file.
-mydata1 <- mydata0 %>% 
+df_1 <- df_0 %>% 
   dplyr::mutate(
-    ID = make.names(`ID`),
-    species = "SEBA"
+    ID = make.names(row_number()),
+    d2H = as.numeric(d2hResults)
+    ) %>% 
+  dplyr::rename(
+    lat = County_Centroid_Lat,
+    lon = County_Centroid_Lon
   ) %>% 
-  dplyr::select(ID, species, d2H, lat, lon, State)
+  dplyr::select(ID, d2H, lat, lon)
 
-mydata <- mydata1 %>%
-# Convert to projection.
+mydata <- df_1 %>%
+# Project to AEA
   st_as_sf(coords = c("lon", "lat"), crs = 4326) %>%
   st_transform(crs = myCRS) %>%
   st_coordinates() %>%
@@ -20,9 +27,6 @@ mydata <- mydata1 %>%
     metersLatitude  = Y,
     metersLongitude = X
   ) %>%
-  cbind(mydata1) %>%
-  dplyr::select(ID, lon, lat, everything() )
-
-# Optionally, check it out and make sure it looks okay.
-# View(mydata)
-
+  cbind(df_1) %>%
+  dplyr::select( ID, lon, lat, everything() ) %>% 
+  dplyr::filter(!is.na(d2H))

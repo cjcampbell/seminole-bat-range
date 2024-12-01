@@ -3,3 +3,9 @@
 .RData
 .Ruserdata
 LASE_dD alias
+bin/*
+bin_archive/*
+data/~$*
+R/R_setup/*
+out_archive/*
+figs_archive/*

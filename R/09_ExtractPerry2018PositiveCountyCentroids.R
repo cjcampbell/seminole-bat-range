@@ -80,7 +80,3 @@ write.csv(centroids,
           "./data/countyRecords/Perry2018PositiveCountyCentroids.csv",
           row.names = F)
 
-
-# Reproduce range map. ----------------------------------------------------
-
-

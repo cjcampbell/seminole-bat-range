@@ -17,15 +17,15 @@ library(stringr)
 library(tidyr)
 
 # Make an object to help navigate the subdirectories.
-# Be sure to fill this in if you're reproducing these analyses!
-my_dir_path <- "/Users/cjcampbell/seminole-bat-range"
+# Be sure to check this if you're reproducing these analyses!
+my_dir_path <- getwd()
 if(!exists("wd")) { wd <- list() }
-wd$R       <- file.path( my_dir_path, "R" )
-wd$bin     <- file.path( my_dir_path, "bin" )
-wd$data    <- file.path( my_dir_path, "data" )
-wd$knownOrigin <- file.path(wd$data, "knownOriginDat")
-wd$figs    <- file.path( my_dir_path, "figs" )
-wd$out    <- file.path( my_dir_path, "out" )
+wd$R            <- file.path( my_dir_path, "R" )
+wd$bin          <- file.path( my_dir_path, "bin" )
+wd$data         <- file.path( my_dir_path, "data" )
+wd$knownOrigin  <- file.path(wd$data, "knownOriginDat")
+wd$figs         <- file.path( my_dir_path, "figs" )
+wd$out          <- file.path( my_dir_path, "out" )
 
 # Check for presence of subdirectories. Create if needed.
 invisible({

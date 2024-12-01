@@ -84,7 +84,7 @@ saveRDS(mydata_distDir, file = file.path(wd$bin, "mydata_distDir.rds"))
 set.seed(42)
 n <- 10000
 likelyDirectionOfOrigin <- mydata_distDir %>% 
-  filter(method == "raw") %>% 
+  dplyr::filter(method == "prob") %>% 
   group_by(ID) %>% 
   sample_n(size = n, weight = value, replace = TRUE) %>% 
   dplyr::summarise(
@@ -101,7 +101,7 @@ saveRDS(likelyDirectionOfOrigin, file = file.path(wd$bin, "likelyDirectionOfOrig
 
 threshold <- 1-0.66  # 66% correct assignments
 md <- mydata_distDir %>% 
-  dplyr::filter(method == "quantsim")
+  dplyr::filter(method == "qSim")
 
 # First, check if any individuals don't have a point over the threshold.
 a <- md %>% 
@@ -115,7 +115,7 @@ if(min(a$n_over) ==0) {
   } else {
     print(min(a$n_over))
   }
-# All individuals have at least 16782 cells over the 66% quant-sim threshold. Great!
+# All individuals have at least 14216 cells over the 66% quant-sim threshold. Great!
 
 
 # Identify the site and distance over 66% threshold and find

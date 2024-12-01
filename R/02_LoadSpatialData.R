@@ -12,7 +12,12 @@ reload_IUCN_rangemaps <- FALSE
 
 # Load GADM data ----------------------------------------------------------
 if(download_GADM == TRUE){
-  source("~/LASE_dD/R_setup/locationSpatialData.R")
+  
+  # Specify path for locationGADMData, e.g.:
+  # locationGADMData <- mypath/LocationOfGADMData
+  # source("R/R_setup/locationSpatialData.R")
+  if(!exists("locationGADMData")) stop("object `locationGADMData` must be specified")
+
   library(rmapshaper)
   message("Loading GADM data...")
 
@@ -20,7 +25,7 @@ if(download_GADM == TRUE){
   # my_extent_aea_st <- st_bbox(st_transform(st_as_sfc(st_bbox(my_extent, crs = 4326)), myCRS))
   # saveRDS(my_extent_aea_st, file = file.path(wd$bin, "my_extent_aea_st.rds"))
 
-  # Get GADM data to state level.
+  # Get GADM data to country level.
   USA <- raster::getData('GADM', path = locationGADMData, country='USA', level=0)
   MEX <- raster::getData('GADM', path = locationGADMData, country='MEX', level=0)
   CAN <- raster::getData('GADM', path = locationGADMData, country='CAN', level=0)

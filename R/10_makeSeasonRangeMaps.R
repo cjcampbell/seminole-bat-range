@@ -2,15 +2,15 @@ library(tidyverse)
 library(sf)
 
 # Load key with county IDs.
-FIPS <- readxl::read_xlsx("./data/countyRecords/County FIDs.xlsx") %>% 
+FIPS <- readxl::read_xlsx("data/LASE_records/countyRecords/County FIDs.xlsx") %>% 
   dplyr::mutate(
     FIPS=as.numeric(FIPS)
-    ) %>% 
+  ) %>% 
   dplyr::select(FIPS, STATE, COUNTY) %>% 
   distinct()
 
 # Load county shapefiles.
-county <- read_sf("./shapefiles/cb_2018_us_county_500k/cb_2018_us_county_500k.shp") %>% 
+county <- read_sf("data/LASE_records/shapefiles/cb_2018_us_county_500k/cb_2018_us_county_500k.shp") %>% 
   dplyr::mutate(
     STATEFP = as.numeric(STATEFP),
     COUNTYFP = as.numeric(COUNTYFP),
@@ -21,7 +21,7 @@ county <- read_sf("./shapefiles/cb_2018_us_county_500k/cb_2018_us_county_500k.sh
 
 # Load LASE records.
 ## From Perry 2018
-records <- readxl::read_xls("./data/countyRecords/SEMINOLE DATA FROM COLLECTIONS.xls") %>% 
+records <- readxl::read_xls("data/LASE_records/countyRecords/SEMINOLE DATA FROM COLLECTIONS.xls") %>% 
   dplyr::mutate(
     FIPS=as.numeric(FIPS),
     source = "Perry 2018"
@@ -30,11 +30,14 @@ records <- readxl::read_xls("./data/countyRecords/SEMINOLE DATA FROM COLLECTIONS
 ## From this study.
 source("~/LASE_dD/R/00_Setup.R")
 mydata <- lapply(1:4, function(x){
-  readxl::read_excel(file.path("data", "All_SEBA_data_FINAL_Permissions_Given.xlsx"), sheet = x) %>% 
+  readxl::read_excel(file.path("data", "All_SEBA_data_FINAL_For_Submission.xlsx"), sheet = x) %>% 
     dplyr::mutate(
       DateFound = as.character(DateFound),
-      source = "WEST")
-}) %>% 
+      source = "WEST") %>% 
+    dplyr::rename(
+      Lon = County_Centroid_Lon,
+      Lat = County_Centroid_Lat)
+  }) %>% 
   bind_rows() 
 
 mydat_FIPS <-  mydata %>% 
@@ -54,14 +57,14 @@ records_county <- left_join(allrecords, FIPS, by = join_by("FIPS")) %>%
   dplyr::filter(!is.na(Season)) %>% 
   dplyr::mutate(
     seasongroup = case_when(Season == "F" ~ "Fall", Season == "W" ~ "Winter", TRUE ~ "Summer") )
-    # Perry_cat = case_when(
-    #   source == "Perry 2018" & STATEFP %in% c( "02", "72", "15", "66", "69", "78", "60", "69") ~ "Perry outlier", source == "Perry" ~ "Perry core", TRUE ~ as.character(NA))
-    # )
 
 records_centroids <- st_centroid(records_county)
 
 # Load gadm data.
-usaDat <- geodata::gadm(country="USA", path= wd$bin, level=1) %>% 
+# source("R/R_setup/locationSpatialData.R")
+if(!exists("locationGADMData")) stop("object `locationGADMData` must be specified")
+
+usaDat <- geodata::gadm(country="USA", path= locationGADMData, level=1) %>% 
   st_as_sf() %>% 
   st_simplify(dTolerance=1000)
 
@@ -72,10 +75,10 @@ usa_centroids <- usaDat %>%
 
 usaDat_east <- usaDat[usa_centroids$X>-110,]
 
-MEXDat <- geodata::gadm(country="MEX", path= wd$bin, level=1) %>% 
+MEXDat <- geodata::gadm(country="MEX", path= locationGADMData, level=1) %>% 
   st_as_sf() %>% 
   st_simplify(dTolerance=1000)
-CANDat <- geodata::gadm(country="CAN", path= wd$bin, level=1) %>% 
+CANDat <- geodata::gadm(country="CAN", path= locationGADMData, level=1) %>% 
   st_as_sf() %>% 
   st_simplify(dTolerance=1000)
 gadm <- bind_rows(usaDat_east, MEXDat) %>% 
@@ -92,8 +95,8 @@ myranges <- records_centroids %>%
   map(~st_coordinates(.)) %>% 
   map(~rangeBuilder::getDynamicAlphaHull(
     x = ., buff = 50e3, fraction = 0.95, partCount = 1, initialAlpha = 20, alphaIncrement = 3,
-    clipToCoast = "terrestrial", proj = "+proj=longlat +datum=WGS84",verbose = T)
-    )
+    clipToCoast = "terrestrial", verbose = T)
+  )
 
 ranges_sf <- myranges %>% 
   map(~st_as_sf(.[[1]])) %>% 
@@ -108,14 +111,14 @@ ranges_sf %>%
   facet_wrap(~seasongroup)
 
 
-# testing of whether bats are observed at higher latitude --------
+# testing of whether bats are observed at higher latitude given year --------
 
 records_centroids2 <- records_centroids %>% 
   dplyr::mutate(
     seasonName = case_when(seasongroup == "Fall" ~ "Autumn", TRUE ~ seasongroup),
     YEAR = case_when(is.na(YEAR) ~ Year, TRUE ~ YEAR),
     thisStudy = case_when(is.na(thisStudy) ~ "no", TRUE ~ thisStudy),
-    ) %>% 
+  ) %>% 
   st_transform(myCRS)
 
 df <- records_centroids2 %>% 
@@ -148,30 +151,18 @@ df %>%
   dplyr::filter(YEAR == 1900)
 
 
-# library(glmmTMB)
-# m1<-glmmTMB::glmmTMB( Y ~ YEAR*seasongroup, data = df)
-# summary(m1)
-# 
-# sjPlot::plot_model(m1)
-# sjPlot::plot_model(m1,type="pred")
-# 
-# df_pred <- expand.grid(YEAR = 1980:2020, seasongroup = unique(df$seasongroup))
-# df_pred$fit <- predict(m1, df_pred, allow.new.levels=TRUE)
-# df_pred %>%
-#   ggplot() +
-#   geom_path(aes(x=YEAR,y=fit,color=seasongroup))
-
 
 
 ## Make an ebird-style map ------
-
+ranges_sf <- ranges_sf %>% st_make_valid()
 yrround <- st_intersection(ranges_sf[ranges_sf$seasongroup == "Summer", ],ranges_sf[ranges_sf$seasongroup == "Winter", ])
 summerOnly <- st_difference(ranges_sf[ranges_sf$seasongroup == "Summer", ],ranges_sf[ranges_sf$seasongroup == "Winter", ])
 winterOnly <- st_difference(ranges_sf[ranges_sf$seasongroup == "Winter", ],ranges_sf[ranges_sf$seasongroup == "Summer", ])
 autumnOnly <- st_difference(ranges_sf[ranges_sf$seasongroup == "Fall", ],ranges_sf[ranges_sf$seasongroup == "Summer", ])
 
 rangemap <- bind_rows(yrround, summerOnly, winterOnly, autumnOnly) %>% 
-  st_transform(myCRS)
+  st_transform(myCRS) %>% 
+  st_make_valid()
 rangemap$seasonName <- c("Year-round", "Summer", "Winter", "Autumn")
 
 # Remove lakes.
@@ -204,9 +195,9 @@ ggsave(p_seasonmap, filename = file.path("figs", "season_ebirdMap.png"), dpi = 6
 
 
 
-# Plot turbines -----------------------------------------------------------
+# Plot map with turbines -----------------------------------------------------------
 
-turbs <- list.files(file.path("data", "uswtdbSHP"), pattern = "shp", full.names = T) %>% 
+turbs2 <- list.files(file.path("data","turbineLocations", "uswtdbSHP"), pattern = "shp", full.names = T) %>% 
   st_read()
 
 seasonWithTurbs <- ggplot() +
@@ -215,14 +206,11 @@ seasonWithTurbs <- ggplot() +
   geom_sf(gadm,mapping=aes(),fill=NA,linewidth=0.2)+
   geom_sf(waterbodies,mapping=aes(),fill=NA,linewidth=0.2)+
   geom_sf(NoAm,mapping=aes(),fill=NA,linewidth=0.3)+
-  geom_sf(turbs, mapping = aes(), size = 0.01, color = "grey40") +
+  geom_sf(turbs2, mapping = aes(), size = 0.01, color = "grey30") +
   theme_minimal()+
   coord_sf(xlim=c(-5e5,20e5),ylim=c(-16.5e5,7e5),  crs = sf::st_crs(rangemap)) +
   theme(legend.position = c(0.78, 0.45), legend.justification = c(0,1))
-ggsave(seasonWithTurbs, filename = file.path("figs", "season_turbines.png"), dpi = 600)
-
-
-
+ggsave(seasonWithTurbs, filename = file.path("figs", "season_turbines_updated.png"), dpi = 1000)
 
 # Plot range maps together ------------------------------------------------
 ## Reproduce ranges used by Perry.
@@ -249,12 +237,12 @@ perry_range <- centroids_perry_core %>%
   st_coordinates() %>% 
   rangeBuilder::getDynamicAlphaHull(
     x = ., buff = 60e3, fraction = 0.95, partCount = 1, initialAlpha = 10,
-    clipToCoast = "terrestrial", proj = "+proj=longlat +datum=WGS84",verbose = T) %>% 
+    clipToCoast = "terrestrial", verbose = T) %>% 
   .[[1]] %>% 
   st_as_sf()  %>% 
   st_transform(sf::st_crs(rangemap))
 
-
+# Plot perry points and ranges.
 ggplot() +
   geom_sf(gadm,mapping=aes(),fill=NA,linewidth=0.3) +
   geom_sf(data = perry_range, mapping = aes(), fill = "grey50", alpha = 0.8) +
@@ -262,18 +250,22 @@ ggplot() +
   theme_minimal()+
   coord_sf(xlim=c(-7e5,19e5),ylim=c(-16.5e5,8e5), crs = sf::st_crs(rangemap))
 
+## Generate our own map.----
 
-ranges_lasiurus <- list.files(file.path("data", "redlist_species_data_3a5d81e3-bc99-43ba-9513-6ad2220d170d"), pattern = "shp", full.names = T) %>% 
+# source("R/R_setup/locationSpatialData.R")
+if(!exists("locationIUCNData")) stop("object `locationIUCNData` must be specified")
+
+ranges_lasiurus <- list.files(file.path(locationIUCNData, "redlist_species_data_d9b37aa6-89b6-4fe4-9ebc-8567d9a63a8c"), pattern = "shp", full.names = T) %>% 
   st_read() %>% 
   st_transform(sf::st_crs(rangemap))
 
 LASE_range <- ranges_lasiurus %>% 
-  dplyr::filter(SCI_NAME == "Lasiurus seminolus")
+  dplyr::filter(BINOMIAL == "Lasiurus seminolus")
 
 LABO_range <- ranges_lasiurus %>% 
-  dplyr::filter(SCI_NAME == "Lasiurus borealis", LEGEND != "Extinct")
+  dplyr::filter(BINOMIAL == "Lasiurus borealis", LEGEND != "Extinct")
 
-perry1 <- st_read(file.path("shapefiles", "perry2018.shp")) %>% 
+perry1 <- st_read(file.path("data/LASE_records","shapefiles", "perry2018.shp")) %>% 
   st_transform(sf::st_crs(rangemap)) %>% 
   dplyr::mutate(range_source = "perry") %>% 
   st_make_valid %>% 
@@ -284,67 +276,60 @@ combo_ranges <- dplyr::mutate(LASE_range, range_source = "IUCN") %>%
   dplyr::select(range_source) %>% 
   rbind(.,perry1)
 
+### Plot ----
 library(ggnewscale)
+library(ggtext)
 
-# perryCol <- "#8572C9"
-# ournewCol <- "#ee9713"
-# IUCNLASECol <- "grey10"
+ournewCol <- "#AB3777"
+perryCol <- "#77579A"
+perryCol2 <- "#546BAE"
+IUCNLASECol <- "#52A675"
+LABOcol1 <- "grey80" # Outline color
+LABOcol2 <- "grey30" # Fill color
 
-ournewCol <- "#0DABD2"
-perryCol <- "#8D6A25"
-perryCol2 <- "#C29A4B"
-IUCNLASECol <- "grey10"
+combo_ranges2 <- dplyr::mutate(LABO_range, range_source = "IUCN_LABO") %>% 
+  dplyr::select(range_source) %>% 
+  rbind(combo_ranges) %>% 
+  mutate(range_source = factor(range_source, levels = c("perry", "IUCN", "IUCN_LABO")))
 
+records_county <- dplyr::mutate(
+  records_county,
+  source = factor(source, levels = c("WEST", "Perry 2018"))
+)
 
-ranges_together <- 
-  ggplot() +
-  geom_sf(LABO_range,mapping=aes(fill = SCI_NAME), linewidth=0.5, color = NA) +
-  scale_fill_manual("", values = "grey92",breaks = "Lasiurus borealis",labels = "IUCN L. borealis") +
+ranges_together2 <- ggplot() +
+  geom_sf(gadm,mapping=aes(),fill="white",linewidth=0.2) +
+  geom_sf(
+    combo_ranges2, 
+    mapping = aes(color = range_source, fill = range_source, linewidth = range_source),
+    alpha = 0.08, linewidth = 0.8
+  ) +
+  scale_color_manual("Range source", values = c("perry" = perryCol, "IUCN" = IUCNLASECol, "IUCN_LABO" = LABOcol1), labels = c("Perry 2018", "IUCN <i>L. seminolus</i>", "IUCN <i>L. borealis</i>")) +
+  scale_fill_manual( "Range source", values = c("perry" = perryCol, "IUCN" = IUCNLASECol, "IUCN_LABO" = LABOcol2), labels = c("Perry 2018", "IUCN <i>L. seminolus</i>", "IUCN <i>L. borealis</i>")) +
   ggnewscale::new_scale_fill() + 
   
-  geom_sf(waterbodies,mapping=aes(),fill=NA,linewidth=0.2)+
-  geom_sf(NoAm,mapping=aes(),fill=NA,linewidth=0.3) +
-  
   geom_sf(records_county,  mapping = aes(fill = source, shape = source), color = NA) + 
+  scale_fill_manual( "Record source", values = c("WEST" = ournewCol, "Perry 2018" = perryCol2), labels = c("This study", "Perry 2018")) +
+  scale_shape_manual("Record source", values = c("WEST" = 22, "Perry 2018" = 21),               labels = c("This study", "Perry 2018")) +
   
-  geom_sf(combo_ranges, mapping = aes(color = range_source, linewidth = range_source), fill = NA, linewidth = 0.5) +
-  scale_color_manual("Range source", values = c("IUCN" = IUCNLASECol, "perry" = perryCol), labels = c("IUCN L. seminolus", "Perry 2018")) +
-  scale_linewidth(breaks = c(0.3, 0.5)) +
-  
-  # geom_sf(LASE_range,mapping=aes(), fill=NA, color = "#E952DE", linewidth = 0.6) +
-  # geom_sf(perry_range,mapping=aes(), color = "#101399", fill = NA,linewidth=0.5) +
+  geom_sf(waterbodies,mapping=aes(),fill=NA,linewidth=0.2) +
   geom_sf(gadm,mapping=aes(),fill=NA,linewidth=0.2) +
-  # geom_sf(records_centroids, mapping = aes(fill = source, shape = source), color = "grey30") +
-  scale_fill_manual( "Record source", values = c("Perry 2018" = perryCol2, "WEST" = ournewCol), labels = c("Perry 2018", "This study")) +
-  scale_shape_manual("Record source", values = c("Perry 2018" = 21, "WEST" = 22), labels = c("Perry 2018", "This study")) +
+  
+  geom_sf(
+    dplyr::filter(combo_ranges2, range_source == "perry"),
+    mapping = aes(), linewidth = 0.8, fill = NA, color = perryCol
+  )  +
+  geom_sf(
+    dplyr::filter(combo_ranges2, range_source == "IUCN"),
+    mapping = aes(), linewidth = 0.8, fill = NA, color = IUCNLASECol
+  )  +
+  
   theme_minimal()+
   coord_sf(xlim=c(-5e5,20e5),ylim=c(-16.5e5,7e5),  crs = sf::st_crs(rangemap)) +
-  theme(legend.position = c(0.78, 0.45), legend.justification = c(0,1))
-ggsave(ranges_together, filename = file.path("figs", "ranges_together.png"), dpi = 600, width = 7, height = 6)
+  theme(
+    legend.position = c(0.81, 0.45),
+    legend.justification = c(0,1),
+    legend.text = element_markdown()
+  )
 
-
-
-### New version
-rbind(LABO_range, )
-
-
-combo_ranges2 <- dplyr::mutate(LASE_range, range_source = "IUCN") %>% 
-  dplyr::select(range_source) %>% 
-  rbind(.,perry1) %>% 
-  rbind(., LABO_range)
-
-
-
-
-
-
-
-# # Combine -----------------------------------------------------------------
-# 
-# library(patchwork)
-# p_together <- ranges_together + seasonWithTurbs+ plot_annotation(tag_levels = 'A')
-# ggsave(p_together, filename = file.path("figs", "ranges_turbs_combo.png"), dpi = 800, width = 10, height = 5)
-# 
-
-
-
+ggsave(ranges_together2, filename = file.path("figs", "fig_ranges_combined.png"), dpi = 1000, width = 7, height = 6)
