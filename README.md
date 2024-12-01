@@ -12,7 +12,10 @@ Scripts used to read, tidy, and standardize data and run analyses.
 | 04_findKnownOriginModelPerformance.R   | Load testing dataset to apply quantile-simulation transformation to define "likely" origins |
 | 05_MakeProbabilityOfOriginMaps.R       | Create probability-of-origin maps and quantile-simulation transformed maps for each sample |
 | 06_MetricsConnectingPoOToSampleSite.R  | Estimate direction and minimum distance traveled for each individual |
-
+| 07_PlotIndividualSurfaces.R            | Plot maps for each stable isotope sample. |
+| 08_plot_aggregated_origins.R           | Plot aggregate origins and direction of travel for all samples. |
+| 09_perry2018CountyRecords.R            | Extract records from Perry 2018. |
+| 10_makeSeasonalRangeMaps.R             | Generate seasonal range maps based on currently available records.| 
 
 ## Session Info
 
