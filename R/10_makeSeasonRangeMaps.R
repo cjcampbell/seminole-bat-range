@@ -174,16 +174,24 @@ rangemap <- st_difference(rangemap,w2)
 ## How different are range maps in size -----
 
 plot(autumnOnly)
-st_area(autumnOnly)  %>% measurements::conv_unit(from = "m2", to = "km2")
+set_units(st_area(yrround), km^2)
+set_units(st_area(autumnOnly), km^2)
+set_units(st_area(winterOnly), km^2)
+
+# Vanishingly small. Revise to remove from plot (for clarity).
+
+rangemap_noWinter <- dplyr::filter(rangemap, SeasonName != "Winter")
+
+
 
 ## Plot range maps -----
 
 library(scales)
 fillvals <- c("Year-round" = "#9e9cd0","Summer" = "#f19d79", "Winter" = "#8dc0e3", "Autumn" = "#f5e671")
 p_seasonmap <- ggplot() +
-  geom_sf(rangemap,  mapping = aes(fill = seasonName), color = NA , alpha = 0.8) +
+  geom_sf(rangemap_noWinter,  mapping = aes(fill = seasonName), color = NA , alpha = 0.8) +
   #geom_sf(records_centroids2,mapping=aes(fill=seasonName), shape=21, size = 0.7,color="grey40", linewidth=0.1) +
-  scale_fill_manual( "Season", values=fillvals,breaks=names(fillvals)) +
+  scale_fill_manual( "Season", values=fillvals, breaks=names(fillvals)) +
   #scale_color_manual("Season", values=scales::muted(fillvals),breaks=names(fillvals)) +
   geom_sf(gadm,mapping=aes(),fill=NA,linewidth=0.2)+
   geom_sf(waterbodies,mapping=aes(),fill=NA,linewidth=0.2)+
