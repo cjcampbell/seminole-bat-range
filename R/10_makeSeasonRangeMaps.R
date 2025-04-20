@@ -191,7 +191,7 @@ rangemap_noWinter <- dplyr::filter(rangemap, seasonName != "Winter")
 
 library(scales)
 fillvals <- c("Year-round" = "#9e9cd0", "Summer" = "#f19d79", "Winter" = "#8dc0e3", "Autumn" = "#f5e671")
-myLabs <- c("Year-round\n(summer & winter)", "Summer & Autumn", "Winter", "Autumn (only)")
+myLabs <- c("Year-round\n(summer & winter)", "Summer\n(summer & autumn)", "Winter", "Autumn (only)")
 p_seasonmap <- ggplot() +
   geom_sf(rangemap_noWinter,  mapping = aes(fill = seasonName), color = NA) +
   #geom_sf(records_centroids2,mapping=aes(fill=seasonName), shape=21, size = 0.7,color="grey40", linewidth=0.1) +
