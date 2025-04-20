@@ -180,7 +180,7 @@ set_units(st_area(winterOnly), km^2)
 
 # Vanishingly small. Revise to remove from plot (for clarity).
 
-rangemap_noWinter <- dplyr::filter(rangemap, SeasonName != "Winter")
+rangemap_noWinter <- dplyr::filter(rangemap, seasonName != "Winter")
 
 
 
@@ -209,7 +209,7 @@ turbs2 <- list.files(file.path("data","turbineLocations", "uswtdbSHP"), pattern 
   st_read()
 
 seasonWithTurbs <- ggplot() +
-  geom_sf(rangemap,  mapping = aes(fill = seasonName), color = NA , alpha = 0.8) +
+  geom_sf(rangemap_noWinter,  mapping = aes(fill = seasonName), color = NA , alpha = 0.8) +
   scale_fill_manual( "Season", values=fillvals,breaks=names(fillvals)) +
   geom_sf(gadm,mapping=aes(),fill=NA,linewidth=0.2)+
   geom_sf(waterbodies,mapping=aes(),fill=NA,linewidth=0.2)+
@@ -292,8 +292,8 @@ ournewCol <- "#AB3777"
 perryCol <- "#77579A"
 perryCol2 <- "#546BAE"
 IUCNLASECol <- "#52A675"
-LABOcol1 <- "grey80" # Outline color
-LABOcol2 <- "grey30" # Fill color
+LABOcol1 <- "grey40" # Outline color
+LABOcol2 <- "grey25" # Fill color
 
 combo_ranges2 <- dplyr::mutate(LABO_range, range_source = "IUCN_LABO") %>% 
   dplyr::select(range_source) %>% 
