@@ -219,7 +219,12 @@ turbs2 <- list.files(file.path("data","turbineLocations", "uswtdbSHP"), pattern 
 
 seasonWithTurbs <- ggplot() +
   geom_sf(rangemap_noWinter,  mapping = aes(fill = seasonName), color = NA) +
-  scale_fill_manual( "Season", values=fillvals,breaks=names(fillvals)) +
+  scale_fill_manual(
+    "Season", 
+    values=fillvals, 
+    breaks=names(fillvals),
+    labels = myLabs
+  ) +
   geom_sf(gadm,mapping=aes(),fill=NA,linewidth=0.2)+
   geom_sf(waterbodies,mapping=aes(),fill=NA,linewidth=0.2)+
   geom_sf(NoAm,mapping=aes(),fill=NA,linewidth=0.3)+
