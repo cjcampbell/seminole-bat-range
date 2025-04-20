@@ -155,15 +155,20 @@ df %>%
 
 ## Make an ebird-style map ------
 ranges_sf <- ranges_sf %>% st_make_valid()
-yrround <- st_intersection(ranges_sf[ranges_sf$seasongroup == "Summer", ],ranges_sf[ranges_sf$seasongroup == "Winter", ])
+
+yrround   <- st_intersection(ranges_sf[ranges_sf$seasongroup == "Summer", ],ranges_sf[ranges_sf$seasongroup == "Winter", ])
 summerOnly <- st_difference(ranges_sf[ranges_sf$seasongroup == "Summer", ],ranges_sf[ranges_sf$seasongroup == "Winter", ])
 winterOnly <- st_difference(ranges_sf[ranges_sf$seasongroup == "Winter", ],ranges_sf[ranges_sf$seasongroup == "Summer", ])
 autumnOnly <- st_difference(ranges_sf[ranges_sf$seasongroup == "Fall", ],ranges_sf[ranges_sf$seasongroup == "Summer", ])
 
-rangemap <- bind_rows(yrround, summerOnly, winterOnly, autumnOnly) %>% 
+summerFall <- st_intersection(ranges_sf[ranges_sf$seasongroup == "Summer", ],ranges_sf[ranges_sf$seasongroup == "Fall", ])
+
+rangemap <- bind_rows(summerFall, yrround, autumnOnly) %>% 
   st_transform(myCRS) %>% 
-  st_make_valid()
-rangemap$seasonName <- c("Year-round", "Summer", "Winter", "Autumn")
+  st_make_valid() %>% 
+  dplyr::select(-seasongroup, -seasongroup.1)
+# rangemap$seasonName <- c("Year-round", "Summer", "Winter", "Autumn")
+rangemap$seasonName <- c("Summer", "Year-round", "Autumn")
 
 # Remove lakes.
 w2 <-st_transform(waterbodies, myCRS) %>% 
@@ -180,18 +185,22 @@ set_units(st_area(winterOnly), km^2)
 
 # Vanishingly small. Revise to remove from plot (for clarity).
 
-rangemap_noWinter <- dplyr::filter(rangemap, seasonName != "Winter")
-
-
+rangemap_noWinter <- dplyr::filter(rangemap, seasonName != "Winter") 
 
 ## Plot range maps -----
 
 library(scales)
-fillvals <- c("Year-round" = "#9e9cd0","Summer" = "#f19d79", "Winter" = "#8dc0e3", "Autumn" = "#f5e671")
+fillvals <- c("Year-round" = "#9e9cd0", "Summer" = "#f19d79", "Winter" = "#8dc0e3", "Autumn" = "#f5e671")
+myLabs <- c("Year-round\n(summer & winter)", "Summer & Autumn", "Winter", "Autumn (only)")
 p_seasonmap <- ggplot() +
-  geom_sf(rangemap_noWinter,  mapping = aes(fill = seasonName), color = NA , alpha = 0.8) +
+  geom_sf(rangemap_noWinter,  mapping = aes(fill = seasonName), color = NA) +
   #geom_sf(records_centroids2,mapping=aes(fill=seasonName), shape=21, size = 0.7,color="grey40", linewidth=0.1) +
-  scale_fill_manual( "Season", values=fillvals, breaks=names(fillvals)) +
+  scale_fill_manual(
+    "Season", 
+    values=fillvals, 
+    breaks=names(fillvals),
+    labels = myLabs
+    ) +
   #scale_color_manual("Season", values=scales::muted(fillvals),breaks=names(fillvals)) +
   geom_sf(gadm,mapping=aes(),fill=NA,linewidth=0.2)+
   geom_sf(waterbodies,mapping=aes(),fill=NA,linewidth=0.2)+
