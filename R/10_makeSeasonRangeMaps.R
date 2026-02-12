@@ -110,6 +110,7 @@ ranges_sf %>%
   geom_sf(records_centroids,mapping=aes(color=seasongroup)) +
   facet_wrap(~seasongroup)
 
+saveRDS(ranges_sf, "out/ranges_sf.rds")
 
 # testing of whether bats are observed at higher latitude given year --------
 
@@ -175,6 +176,8 @@ w2 <-st_transform(waterbodies, myCRS) %>%
   st_union()
 rangemap <- st_difference(rangemap,w2)
 
+st_write(rangemap, "out/rangemap.shp")
+# rangemap <- st_read("out/rangemap.shp")
 
 ## How different are range maps in size -----
 
